@@ -1,94 +1,168 @@
-var balloon,balloonImage1,balloonImage2;
-var database;
-var height;
+var score =0;
+var gun,bluebubble,redbubble, bullet, backBoard;
+
+var gunImg,bubbleImg, bulletImg, blastImg, backBoardImg;
+
+var redBubbleGroup, redBubbleGroup, bulletGroup;
+
+
+var life =3;
+var score=0;
+var gameState=1
 
 function preload(){
-   bg =loadImage("Images/cityImage.png");
-   balloonImage1=loadAnimation("Images/HotAirBallon01.png");
-   balloonImage2=loadAnimation("Images/HotAirBallon01.png","Images/HotAirBallon01.png",
-   "Images/HotAirBallon01.png","Images/HotAirBallon02.png","Images/HotAirBallon02.png",
-   "Images/HotAirBallon02.png","Images/HotAirBallon03.png","Images/HotAirBallon03.png","Images/HotAirBallon03.png");
-  }
-
-//Function to set initial environment
+  gunImg = loadImage("gun1.png")
+  blastImg = loadImage("blast.png")
+  bulletImg = loadImage("bullet1.png")
+  blueBubbleImg = loadImage("waterBubble.png")
+  redBubbleImg = loadImage("redbubble.png")
+  backBoardImg= loadImage("back.jpg")
+}
 function setup() {
+  createCanvas(800, 800);
 
-   database=firebase.database();
-
-  createCanvas(1500,700);
-
-  balloon=createSprite(250,650,150,150);
-  balloon.addAnimation("hotAirBalloon",balloonImage1);
-  balloon.scale=0.5;
-
-  var balloonHeight=database.ref('balloon/height');
-  balloonHeight.on("value",readHeight, showError);
-
-
-
-  textSize(20); 
+  backBoard= createSprite(50, width/2, 100,height);
+  backBoard.addImage(backBoardImg)
+  
+  gun= createSprite(100, height/2, 50,50);
+  gun.addImage(gunImg)
+  gun.scale=0.2
+  
+  bulletGroup = createGroup();   
+  blueBubbleGroup = createGroup();   
+  redBubbleGroup = createGroup();   
+  
+  heading= createElement("h1");
+  scoreboard= createElement("h1");
 }
 
-// function to display UI
 function draw() {
-  background(bg);
+  background("#BDA297");
+  
+  heading.html("Life: "+life)
+  heading.style('color:red'); 
+  heading.position(150,20)
 
-  if(keyDown(LEFT_ARROW)){
-    updateHeight(-10,0);
-    balloon.addAnimation("hotAirBalloon",balloonImage2);
-  }
-  else if(keyDown(RIGHT_ARROW)){
-    updateHeight(10,0);
-    balloon.addAnimation("hotAirBalloon",balloonImage2);
-  }
-  else if(keyDown(UP_ARROW)){
-    updateHeight(0,-10);
-    balloon.addAnimation("hotAirBalloon",balloonImage2);
-    balloon.scale=balloon.scale -0.005;
-  }
-  else if(keyDown(DOWN_ARROW)){
-    updateHeight(0,+10);
-    balloon.addAnimation("hotAirBalloon",balloonImage2);
-    balloon.scale=balloon.scale+0.005;
-  }
+  scoreboard.html("Score: "+score)
+  scoreboard.style('color:red'); 
+  scoreboard.position(width-200,20)
 
-  drawSprites();
-  fill(0);
-  stroke("white");
-  textSize(25);
-  text("**Use arrow keys to move Hot Air Balloon!",40,40);
+  if(gameState===1){
+    gun.y=mouseY  
+
+    if (frameCount % 80 === 0) {
+      drawblueBubble();
+    }
+
+    if (frameCount % 100 === 0) {
+      drawredBubble();
+    }
+
+    if(keyDown("space")){
+      shootBullet();
+    }
+
+    if (blueBubbleGroup.collide(backBoard)){
+      handleGameover(blueBubbleGroup);
+    }
+    
+    if (redBubbleGroup.collide(backBoard)) {
+      handleGameover(redBubbleGroup);
+    }
+    
+    /*if(blueBubbleGroup.(bulletGroup)){
+      handleBubbleCollision(blueBubbleGroup);
+    }*/
+
+    /*if(blueBubbleGroup.collide(bulletGroup)){
+      handleBubbleCollision();
+    }*/
+    
+    /*if(blueBubbleGroup.collide()){
+      handleBubbleCollision(blueBubbleGroup);
+    }*/
+    
+    /*if(blueBubbleGroup.collide(bulletGroup)){
+      handleBubbleCollision(blueBubbleGroup);
+    }*/
+
+    if(redBubbleGroup.collide(bulletGroup)){
+      handleBubbleCollision(redBubbleGroup);
+    }
+
+    drawSprites();
+  }
+    
+  
 }
 
- function updateHeight(x,y){
-   database.ref('balloon/height').set({
-     'x': height.x + x ,
-     'y': height.y + y
-   })
- }
+function drawblueBubble(){
+  bluebubble = createSprite(800,random(20,780),40,40);
+  bluebubble.addImage(blueBubbleImg);
+  bluebubble.scale = 0.1;
+  bluebubble.velocityX = -8;
+  bluebubble.lifetime = 400;
+  blueBubbleGroup.add(bluebubble);
+}
+function drawredBubble(){
+  redbubble = createSprite(800,random(20,780),40,40);
+  redbubble.addImage(redBubbleImg);
+  redbubble.scale = 0.1;
+  redbubble.velocityX = -8;
+  redbubble.lifetime = 400;
+  redBubbleGroup.add(redbubble);
+}
 
+function shootBullet(){
+  bullet= createSprite(150, width/2, 50,20)
+  bullet.y= gun.y-20
+  bullet.addImage(bulletImg)
+  bullet.scale=0.12
+  bullet.velocityX= 7
+  bulletGroup.add(bullet)
+}
 
-//CHOOSE THE CORRECT READHEIGHT FUNCTION
-// function readHeight(data){
-//   balloon.x = height.x;
-//   balloon.y = height.y;
-// }
+function handleBubbleCollision(bubbleGroup){
+    if (life > 0) {
+       score=score+1;
+    }
 
-// function readHeight(data){
-//   height = data.val();
-//   balloon.x = height.x;
-//   balloon.y = height.y;
-// }
+    /* blast= createSprite(bullet.x+60, bullet.y, 50,50);
+    blast.addImage(blastImg) */
 
-// function readHeight(data){
-//   height = data.val();
-// }
+    /* blast= sprite(bullet.x+60, bullet.y, 50,50);
+    blast.addImage(blastImg) */
 
-// function readHeight(){
-//   height = val();
-//   balloon.x = height.x;
-//   balloon.y = height.y;
-// }
+    /* blast= createSprite(bullet.x+60, bullet.y, 50,50);
+    blast.add(blastImg) */
 
-function showError(){
-  console.log("Error in writing to the database");
+    /* blast= createSprite(bullet.x+60, bullet.y, 50,50);
+    image(blastImg) */
+    
+    blast.scale=0.3
+    blast.life=20
+    bulletGroup.destroyEach()
+    bubbleGroup.destroyEach()
+}
+
+function handleGameover(bubbleGroup){
+  
+    life=life-1;
+    bubbleGroup.destroyEach();
+    
+
+    if (life === 0) {
+      gameState=2
+      
+      swal({
+        title: `Game Over`,
+        text: "Oops you lost the game....!!!",
+        text: "Your Score is " + score,
+        imageUrl:
+          "https://cdn.shopify.com/s/files/1/1061/1924/products/Thumbs_Down_Sign_Emoji_Icon_ios10_grande.png",
+        imageSize: "100x100",
+        confirmButtonText: "Thanks For Playing"
+      });
+    }
+  
 }
